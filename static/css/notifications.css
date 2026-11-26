@@ -1,0 +1,28 @@
+.n {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    border-left: 4px solid var(--line)
+}
+
+.n.new {
+    border-left-color: var(--tag);
+    font-weight: 600
+}
+
+.n small {
+    display: block;
+    color: var(--mut);
+    font-weight: 400
+}
+
+.bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap
+}
+
+.bar .btn {
+    flex: 1
+}

@@ -1,0 +1,16 @@
+.auth {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+    width: 100%
+}
+
+.auth h1 {
+    font-size: 34px;
+    margin: 16px 0 4px
+}
+
+.auth .sw {
+    text-align: center;
+    margin-top: 16px
+}

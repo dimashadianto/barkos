@@ -1,0 +1,39 @@
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 8px
+}
+
+.stats div {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px
+}
+
+.stats b {
+    display: block;
+    font: 800 26px 'Bricolage Grotesque'
+}
+
+.q img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 8px
+}
+
+.q .row {
+    margin-top: 8px;
+    flex-wrap: wrap
+}
+
+.q input {
+    margin: 8px 0 0
+}
+
+h3 {
+    margin: 20px 0 8px
+}

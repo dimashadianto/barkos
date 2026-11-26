@@ -1,0 +1,287 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;600&display=swap');
+
+:root {
+    --blue: #2A4BD7;
+    --tag: #FFC72C;
+    --bg: #F2F5FB;
+    --ink: #18213A;
+    --mut: #5F6B85;
+    --ok: #178A5E;
+    --bad: #CF3E3E;
+    --line: #D9E0EF;
+    --card: #fff
+}
+
+@media(prefers-color-scheme:dark) {
+    :root {
+        --bg: #10162B;
+        --ink: #EEF1FA;
+        --mut: #9AA6C4;
+        --line: #27315A;
+        --card: #1A2242;
+        --blue: #7C95FF
+    }
+}
+
+* {
+    box-sizing: border-box
+}
+
+html,
+body {
+    margin: 0
+}
+
+body {
+    font: 16px/1.45 Figtree, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-text-size-adjust: 100%
+}
+
+h1,
+h2,
+h3 {
+    font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    margin: 0;
+    line-height: 1.1
+}
+
+a {
+    color: var(--blue)
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+    color: inherit
+}
+
+:focus-visible {
+    outline: 3px solid var(--tag);
+    outline-offset: 2px
+}
+
+.app {
+    max-width: 720px;
+    margin: 0 auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column
+}
+
+.hd {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    padding-top: max(14px, env(safe-area-inset-top));
+    background: var(--bg);
+    border-bottom: 1px solid var(--line)
+}
+
+.hd h1 {
+    flex: 1;
+    font-size: 22px
+}
+
+.back {
+    text-decoration: none;
+    font-size: 24px;
+    color: var(--ink)
+}
+
+.bell {
+    position: relative;
+    text-decoration: none;
+    font-size: 22px
+}
+
+.bell b {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    background: var(--bad);
+    color: #fff;
+    font: 600 11px Figtree;
+    border-radius: 99px;
+    padding: 1px 6px
+}
+
+.scr {
+    flex: 1;
+    padding: 20px 20px 100px
+}
+
+.nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    background: var(--card);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom)
+}
+
+.nav a {
+    flex: 1;
+    text-align: center;
+    padding: 12px 0;
+    color: var(--mut);
+    font-size: 13px;
+    text-decoration: none
+}
+
+.nav a.on {
+    color: var(--blue);
+    font-weight: 600;
+    box-shadow: inset 0 3px var(--tag)
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    background: var(--card);
+    margin: 4px 0 12px
+}
+
+label {
+    font-weight: 600;
+    font-size: 14px;
+    display: block
+}
+
+.btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    border: 0;
+    border-radius: 12px;
+    padding: 13px 18px;
+    font-weight: 600;
+    background: var(--blue);
+    color: #fff;
+    cursor: pointer
+}
+
+.btn.alt {
+    background: transparent;
+    color: var(--blue);
+    border: 1.5px solid var(--blue)
+}
+
+.btn.bad {
+    background: var(--bad);
+    color: #fff
+}
+
+.btn.sm {
+    display: inline-block;
+    width: auto;
+    padding: 8px 14px
+}
+
+.btn:disabled {
+    opacity: .5
+}
+
+.row {
+    display: flex;
+    gap: 8px;
+    align-items: center
+}
+
+.row>* {
+    flex: 1
+}
+
+.mut {
+    color: var(--mut);
+    font-size: 14px
+}
+
+.err {
+    color: var(--bad);
+    min-height: 20px;
+    font-size: 14px
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 12px
+}
+
+.grid {
+    display: grid;
+    gap: 12px
+}
+
+@media(min-width:640px) {
+    .grid {
+        grid-template-columns: 1fr 1fr
+    }
+}
+
+.tag {
+    display: inline-block;
+    background: var(--tag);
+    color: #18213A;
+    font-family: 'Bricolage Grotesque';
+    font-weight: 800;
+    padding: 4px 12px 4px 20px;
+    clip-path: polygon(10px 0, 100% 0, 100% 100%, 10px 100%, 0 50%)
+}
+
+.st {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: var(--line)
+}
+
+.st.ok {
+    background: var(--ok);
+    color: #fff
+}
+
+.st.bad {
+    background: var(--bad);
+    color: #fff
+}
+
+.st.warn {
+    background: var(--tag);
+    color: #18213A
+}
+
+.toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px);
+    max-width: 400px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 12px 16px;
+    border-radius: 12px;
+    z-index: 9
+}

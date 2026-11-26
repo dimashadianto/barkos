@@ -1,0 +1,23 @@
+.who {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px
+}
+
+.av {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--tag);
+    color: #18213A;
+    display: grid;
+    place-items: center;
+    font: 800 24px 'Bricolage Grotesque'
+}
+
+.links {
+    display: grid;
+    gap: 8px;
+    margin-top: 20px
+}

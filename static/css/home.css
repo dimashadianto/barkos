@@ -1,0 +1,46 @@
+.chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin: 4px 0 12px;
+    padding-bottom: 4px
+}
+
+.chip {
+    border: 1.5px solid var(--line);
+    border-radius: 99px;
+    padding: 6px 14px;
+    background: var(--card);
+    cursor: pointer;
+    white-space: nowrap
+}
+
+.chip.on {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue)
+}
+
+.item {
+    display: flex;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit
+}
+
+.ph {
+    width: 92px;
+    height: 92px;
+    border-radius: 10px;
+    background: var(--line);
+    object-fit: cover;
+    flex: none
+}
+
+.item b {
+    display: block
+}
+
+.item .tag {
+    margin-top: 6px
+}

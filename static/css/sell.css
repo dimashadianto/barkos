@@ -1,0 +1,30 @@
+.pv {
+    max-width: 140px;
+    border-radius: 10px;
+    margin-bottom: 8px
+}
+
+.hint {
+    background: var(--card);
+    border-left: 4px solid var(--tag);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px
+}
+
+.chk {
+    display: flex;
+    gap: 8px;
+    align-items: center
+}
+
+.chk input {
+    width: auto;
+    margin: 0
+}
+
+.mine a {
+    text-decoration: none;
+    color: inherit;
+    display: block
+}

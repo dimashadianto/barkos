@@ -1,0 +1,8 @@
+.ocard .row {
+    margin-top: 10px;
+    flex-wrap: wrap
+}
+
+.ocard .row>* {
+    flex: none
+}

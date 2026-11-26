@@ -1,0 +1,57 @@
+.pic {
+    width: 100%;
+    border-radius: 14px;
+    max-height: 300px;
+    object-fit: cover;
+    margin-bottom: 12px
+}
+
+.notice {
+    border: 1.5px dashed var(--blue);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 16px 0
+}
+
+.acts {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px
+}
+
+details {
+    margin-top: 4px
+}
+
+summary {
+    cursor: pointer;
+    color: var(--bad);
+    font-weight: 600;
+    padding: 8px 0
+}
+
+fieldset.pm {
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin: 0
+}
+
+fieldset.pm legend {
+    font-weight: 600;
+    font-size: 14px;
+    padding: 0 6px
+}
+
+fieldset.pm label {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 400;
+    padding: 6px 0
+}
+
+fieldset.pm input {
+    width: auto;
+    margin: 0
+}
