@@ -1,21 +1,3 @@
-# Python
 __pycache__/
-*.py[cod]
-.venv/
-venv/
-env/
-*.egg-info/
-
-# Database lokal (berisi data pengguna, jangan di-commit)
+*.pyc
 *.db
-*.sqlite3
-
-# Secret / konfigurasi lokal
-.env
-.env.*
-
-# Editor & OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
