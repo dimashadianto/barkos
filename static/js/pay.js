@@ -1,6 +1,6 @@
 (async () => {
     const u = await guard({ user: true }); layout("Pembayaran", null, u, "orders"); const id = qs.get("order"); let ch, o, pick = null;
-    const demo = '<div class="demo">MODE DEMO: ini simulasi payment gateway. Tidak ada uang, bank, atau e-wallet sungguhan yang dipakai.</div>';
+    const demo = '<div class="demo">Simulasi payment gateway. Tidak ada uang, bank, atau e-wallet sungguhan yang digunakan.</div>';
     function qr(seed) {
         let h = 0; for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0; const r = () => (h = (h * 1664525 + 1013904223) >>> 0) / 2 ** 32, F = [[0, 0], [14, 0], [0, 14]]; let s = "";
         for (let y = 0; y < 21; y++)for (let x = 0; x < 21; x++)if (!F.some(f => x >= f[0] && x < f[0] + 7 && y >= f[1] && y < f[1] + 7) && r() > .5) s += `<rect x="${x}" y="${y}" width="1" height="1"/>`;
@@ -19,7 +19,7 @@
             B.innerHTML = demo + sum() + `<h3>${esc(i.channel)}</h3>${bank ? `<p class="mut">Nomor Virtual Account</p><div class="va" id="va">${esc(i.va)}</div><button class="btn alt sm" id="cp">Salin nomor</button>
   <ol class="steps"><li>Buka m-banking atau ATM</li><li>Pilih Transfer > Virtual Account</li><li>Masukkan nomor di atas dan bayar ${rp(i.amount)}</li></ol>`
                 : `${qr(i.qr)}<ol class="steps"><li>Buka aplikasi ${esc(i.channel)}</li><li>Pindai kode QR di atas</li><li>Konfirmasi pembayaran ${rp(i.amount)}</li></ol>`}
-  <p class="mut">Berlaku sampai ${new Date(i.expires * 1000).toLocaleString("id-ID")}</p><button class="btn" id="sim">Simulasi: tandai sudah bayar</button><button class="btn alt" style="margin-top:8px" id="chg">Ganti metode</button>`;
+  <p class="mut">Berlaku sampai ${new Date(i.expires * 1000).toLocaleString("id-ID")}</p><button class="btn" id="sim">Simulasi bayar sekarang</button><button class="btn alt" style="margin-top:8px" id="chg">Ganti metode</button>`;
             $("#sim").onclick = async () => { try { await api("POST", `/orders/${id}/pay/simulate`); toast("Pembayaran berhasil (simulasi)"); await load() } catch (x) { toast(x.message) } };
             $("#chg").onclick = () => { o.pay_status = "unpaid"; draw() }; if (bank) $("#cp").onclick = () => { navigator.clipboard?.writeText(i.va); toast("Nomor disalin") }; return
         }

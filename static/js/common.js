@@ -79,3 +79,22 @@ const shrinkImg = (f, max = 1080) => new Promise(res => {
     i.onload = () => { const k = Math.min(1, max / Math.max(i.width, i.height)), c = document.createElement("canvas"); c.width = Math.round(i.width * k); c.height = Math.round(i.height * k); c.getContext("2d").drawImage(i, 0, 0, c.width, c.height); URL.revokeObjectURL(i.src); res(c.toDataURL("image/jpeg", .78)) };
     i.onerror = () => res(null); i.src = URL.createObjectURL(f)
 });
+
+function openFeedback() {
+    const d = document.createElement("dialog"); d.className = "modal rvm"; d.setAttribute("aria-labelledby", "fb-t"); let r = 0;
+    d.innerHTML = `<h2 id="fb-t">Kirim feedback</h2><p class="mut">Ceritakan pengalamanmu supaya BarKos bisa lebih baik.</p>
+<div class="pick" role="radiogroup" aria-label="Penilaian">${[1, 2, 3, 4, 5].map(n => `<button type="button" role="radio" aria-checked="false" aria-label="${n} bintang" data-n="${n}">★</button>`).join("")}</div>
+<select id="fbc" aria-label="Topik"><option>umum</option><option>pencarian</option><option>transaksi</option><option>verifikasi</option><option>keamanan</option></select>
+<textarea id="fbm" rows="4" maxlength="500" placeholder="Tulis pesanmu"></textarea><div class="err" id="fbe" role="alert"></div>
+<div class="m-act"><button class="btn alt" data-x>Batal</button><button class="btn" data-ok>Kirim feedback</button></div>`;
+    document.body.append(d); const B = [...d.querySelectorAll(".pick button")], err = d.querySelector("#fbe");
+    B.forEach(b => b.onclick = () => { r = +b.dataset.n; B.forEach(x => { x.classList.toggle("on", +x.dataset.n <= r); x.setAttribute("aria-checked", +x.dataset.n === r) }) });
+    d.querySelector("[data-x]").onclick = () => d.close();
+    d.querySelector("[data-ok]").onclick = async () => {
+        const m = d.querySelector("#fbm").value.trim();
+        if (!r) { err.textContent = "Pilih jumlah bintang dulu"; return }
+        if (!m) { err.textContent = "Tulis pesan dulu"; return }
+        try { await api("POST", "/feedback", { rating: r, category: d.querySelector("#fbc").value, message: m }); d.close(); toast("Terima kasih, feedback terkirim") } catch (x) { err.textContent = x.message }
+    };
+    d.addEventListener("close", () => d.remove()); d.showModal();
+}
