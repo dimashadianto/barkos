@@ -1,5 +1,8 @@
+"""BarKos backend (Flask + SQLite). Jalankan: python app.py  -> http://localhost:5000"""
+
 import sqlite3, math, time, os, json
-from flask import Flask, request, jsonify, g, send_from_directory
+from flask import Flask, request, jsonify, g, send_from_directory, redirect, abort
+from urllib.parse import quote
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from services import ai_moderation, notifier, payment  # 3 layanan pihak ketiga (mock)
@@ -17,6 +20,7 @@ AREAS = {
     "Bekasi Barat": (-6.24, 106.99),
 }
 
+
 # ---------- DB ----------
 def db():
     if "db" not in g:
@@ -24,19 +28,23 @@ def db():
         g.db.row_factory = sqlite3.Row
     return g.db
 
+
 @app.teardown_appcontext
 def close(_):
     d = g.pop("db", None)
     d and d.close()
 
+
 def q(sql, a=(), one=False):
     r = db().execute(sql, a).fetchall()
     return (r[0] if r else None) if one else r
+
 
 def ex(sql, a=()):
     c = db().execute(sql, a)
     db().commit()
     return c.lastrowid
+
 
 def init():
     c = sqlite3.connect(DB)
@@ -57,6 +65,7 @@ def init():
         ("orders", "pay_status"),
         ("orders", "pay_ref"),
         ("orders", "pay_info"),
+        ("orders", "done_ts"),
     ]:
         try:
             c.execute(
@@ -72,22 +81,26 @@ def init():
     c.commit()
     c.close()
 
-def notify(user_id, text, link="notifications.html"):
+
+def notify(user_id, text, link="notifications"):
     ex(
         "INSERT INTO notifications(user_id,text,link,ts) VALUES(?,?,?,?)",
         (user_id, text, link, int(time.time())),
     )
     notifier.send(user_id, text)
 
-def notify_admins(text, link="admin.html"):
+
+def notify_admins(text, link="admin"):
     for a in q("SELECT id FROM users WHERE role='admin'"):
         notify(a["id"], text, link)
+
 
 # ---------- Auth ----------
 def user_json(u):
     return {
         k: u[k] for k in ("id", "name", "email", "phone", "segment", "role", "area")
     }
+
 
 def auth(admin=False):
     def deco(f):
@@ -111,8 +124,10 @@ def auth(admin=False):
 
     return deco
 
+
 def body():
     return request.get_json(silent=True) or {}
+
 
 @app.post("/api/register")
 def register():
@@ -153,6 +168,7 @@ def register():
         user=user_json(q("SELECT * FROM users WHERE id=?", (uid,), one=True)),
     )
 
+
 @app.post("/api/login")
 def login():
     d = body()
@@ -164,6 +180,7 @@ def login():
     if not u or not check_password_hash(u["pw"], d.get("password", "")):
         return jsonify(error="Email atau password salah"), 401
     return jsonify(token=tok.dumps(u["id"]), user=user_json(u))
+
 
 # ---------- Profil, hapus akun, feedback ----------
 @app.get("/api/me")
@@ -230,22 +247,23 @@ def me_delete():
 @app.post("/api/feedback")
 @auth()
 def feedback():
+    if g.user["role"] == "admin":
+        return jsonify(error="Admin tidak perlu mengirim feedback"), 403
     d = body()
     try:
-        ok = 1 <= int(d.get("rating", 0)) <= 5
-    except ValueError:
-        ok = False
-    if not (ok and d.get("message", "").strip()):
+        rating = int(d.get("rating", 0))
+    except (TypeError, ValueError):
+        rating = 0
+    msg = (d.get("message") or "").strip()[:1000]
+    if not (1 <= rating <= 5 and msg):
         return jsonify(error="Beri bintang 1-5 dan tulis pesan"), 400
     ex(
         "INSERT INTO feedback(user_id,rating,category,message,ts) VALUES(?,?,?,?,?)",
-        (
-            g.user["id"],
-            d["rating"],
-            d.get("category", "umum"),
-            d["message"].strip(),
-            int(time.time()),
-        ),
+        (g.user["id"], rating, d.get("category", "umum"), msg, int(time.time())),
+    )
+    notify_admins(
+        f"Feedback baru dari {g.user['name']} ({rating}/5): {msg[:60]}",
+        "admin-feedback",
     )
     return jsonify(ok=True)
 
@@ -465,7 +483,7 @@ def messages(lid):
             notify(
                 other,
                 f"Pesan baru dari {g.user['name']} tentang {l['title']}",
-                f"chatroom.html?l={lid}&w={i}&t={l['title']}",
+                f"chatroom?l={lid}&w={i}&t={quote(l['title'])}",
             )
     rows = q(
         "SELECT * FROM messages WHERE listing_id=? AND ((from_id=? AND to_id=?) OR (from_id=? AND to_id=?)) ORDER BY ts",
@@ -531,7 +549,7 @@ def order_create():
     notify(
         l["seller_id"],
         f"{g.user['name']} ingin membeli {l['title']} ({'COD' if pm == 'cod' else 'bayar online'})",
-        "orders.html",
+        "orders",
     )
     return jsonify(ok=True)
 
@@ -541,7 +559,7 @@ def order_create():
 def orders():
     i = g.user["id"]
     rows = q(
-        "SELECT o.*, l.title FROM orders o LEFT JOIN listings l ON l.id=o.listing_id WHERE o.buyer_id=? OR o.seller_id=? ORDER BY o.ts DESC",
+        "SELECT o.*, l.title FROM orders o LEFT JOIN listings l ON l.id=o.listing_id WHERE o.buyer_id=? OR o.seller_id=? ORDER BY o.ts DESC, o.id DESC",
         (i, i),
     )
     return jsonify([order_json(r, i) for r in rows])
@@ -607,7 +625,7 @@ def order_pay_sim(oid):
     notify(
         o["seller_id"],
         f"Pembayaran transaksi #{oid} sudah masuk. Silakan serahkan barang ke pembeli.",
-        "orders.html",
+        "orders",
     )
     return jsonify(ok=True)
 
@@ -651,7 +669,10 @@ def order_act(oid, act):
         return jsonify(error="Aksi tidak valid untuk status saat ini"), 400
     if ns == "completed":
         ex("UPDATE listings SET status='sold' WHERE id=?", (o["listing_id"],))
-    ex("UPDATE orders SET status=? WHERE id=?", (ns, oid))
+    ex(
+        "UPDATE orders SET status=?, done_ts=? WHERE id=?",
+        (ns, int(time.time()) if ns == "completed" else None, oid),
+    )
     lab = {
         "accepted": "disetujui"
         + (
@@ -664,11 +685,10 @@ def order_act(oid, act):
         "cancelled": "dibatalkan",
     }[ns]
     notify(
-        o["buyer_id"] if seller else o["seller_id"],
-        f"Transaksi #{oid} {lab}",
-        "orders.html",
+        o["buyer_id"] if seller else o["seller_id"], f"Transaksi #{oid} {lab}", "orders"
     )
     return jsonify(status=ns)
+
 
 # ---------- Laporan & verifikasi admin ----------
 @app.post("/api/reports")
@@ -688,6 +708,7 @@ def report():
     )
     notify_admins(f"Laporan baru untuk barang: {l['title']}")
     return jsonify(ok=True)
+
 
 @app.get("/api/admin/queue")
 @auth(admin=True)
@@ -730,7 +751,7 @@ def admin_act(lid, act):
             if act == "approve"
             else f"Barang '{l['title']}' ditolak: {reason}"
         ),
-        "sell.html",
+        "sell",
     )
     return jsonify(ok=True)
 
@@ -738,24 +759,126 @@ def admin_act(lid, act):
 @app.get("/api/admin/metrics")
 @auth(admin=True)
 def metrics():
-    n = lambda s: q(s, one=True)[0]
-    done, total = n("SELECT COUNT(*) FROM orders WHERE status='completed'"), n(
-        "SELECT COUNT(*) FROM orders"
+    n = lambda sql, a=(): q(sql, a, one=True)[0] or 0
+    cnt = lambda st: n(
+        "SELECT COUNT(*) FROM orders WHERE status IN (%s)" % ",".join("?" * len(st)), st
     )
-    rep = n(
-        "SELECT COUNT(*) FROM (SELECT buyer_id FROM orders WHERE status='completed' GROUP BY buyer_id HAVING COUNT(*)>1)"
+    done, running, failed = (
+        cnt(["completed"]),
+        cnt(["requested", "accepted"]),
+        cnt(["rejected", "cancelled"]),
+    )
+    finished = done + failed  # transaksi yang sudah ada hasil akhirnya
+    fb = q("SELECT COUNT(*) AS c, AVG(rating) AS a FROM feedback", one=True)
+    return jsonify(
+        transactions=done,
+        running=running,
+        failed=failed,
+        total=done + running + failed,
+        finished=finished,
+        success_rate=(
+            round(100 * done / finished) if finished else 0
+        ),  # selesai / (selesai + ditolak + dibatalkan)
+        repeat_buyers=n(
+            "SELECT COUNT(*) FROM (SELECT buyer_id FROM orders WHERE status='completed' GROUP BY buyer_id HAVING COUNT(*)>1)"
+        ),
+        buyers=n(
+            "SELECT COUNT(DISTINCT buyer_id) FROM orders WHERE status='completed'"
+        ),
+        revenue=n("SELECT SUM(fee) FROM orders WHERE status='completed'"),
+        gmv=n("SELECT SUM(price) FROM orders WHERE status='completed'"),
+        users=n("SELECT COUNT(*) FROM users WHERE role='user'"),
+        feedback_count=fb["c"],
+        feedback_avg=round(fb["a"], 1) if fb["a"] else 0,
+    )
+
+
+@app.get("/api/admin/orders")
+@auth(admin=True)
+def admin_orders():
+    rows = q(
+        """SELECT o.*, l.title, b.name AS buyer, s.name AS seller FROM orders o LEFT JOIN listings l ON l.id=o.listing_id
+                LEFT JOIN users b ON b.id=o.buyer_id LEFT JOIN users s ON s.id=o.seller_id ORDER BY o.id DESC LIMIT 200"""
     )
     return jsonify(
-        success_rate=round(100 * done / total) if total else 0,
-        repeat_buyers=rep,
-        users=n("SELECT COUNT(*) FROM users WHERE role='user'"),
-        transactions=done,
+        [
+            dict(
+                id=r["id"],
+                title=r["title"] or "(dihapus)",
+                buyer=r["buyer"] or "(dihapus)",
+                seller=r["seller"] or "(dihapus)",
+                price=r["price"],
+                fee=r["fee"],
+                status=r["status"],
+                pay_method=r["pay_method"] or "cod",
+                pay_status=r["pay_status"] or "none",
+                ts=r["ts"],
+                done_ts=r["done_ts"],
+            )
+            for r in rows
+        ]
     )
+
+
+@app.get("/api/admin/feedback")
+@auth(admin=True)
+def admin_feedback():
+    rows = q(
+        "SELECT f.*, u.name, u.segment FROM feedback f LEFT JOIN users u ON u.id=f.user_id ORDER BY f.id DESC LIMIT 200"
+    )
+    dist = {
+        r["rating"]: r["c"]
+        for r in q("SELECT rating, COUNT(*) AS c FROM feedback GROUP BY rating")
+    }
+    avg = q("SELECT AVG(rating) FROM feedback", one=True)[0]
+    return jsonify(
+        count=sum(dist.values()),
+        avg=round(avg, 1) if avg else 0,
+        dist=[dist.get(k, 0) for k in (1, 2, 3, 4, 5)],
+        items=[
+            dict(
+                id=r["id"],
+                name=r["name"] or "(akun dihapus)",
+                segment=r["segment"],
+                rating=r["rating"],
+                category=r["category"],
+                message=r["message"],
+                ts=r["ts"],
+            )
+            for r in rows
+        ],
+    )
+
+
+# ---------- URL bersih: /home (bukan /home.html), landing di "/" ----------
+STATIC = os.path.join(app.root_path, "static")
+PAGES = {f[:-5] for f in os.listdir(STATIC) if f.endswith(".html")} - {"index"}
+
+
+@app.before_request
+def strip_html():  # link lama /home.html?x=1 -> /home?x=1 ; /index.html -> /
+    n = request.path.lstrip("/")
+    if n.endswith(".html") and "/" not in n and (n[:-5] in PAGES or n == "index.html"):
+        qs = request.query_string.decode()
+        return redirect(
+            ("/" if n == "index.html" else "/" + n[:-5]) + ("?" + qs if qs else ""), 302
+        )
 
 
 @app.get("/")
 def index():
-    return send_from_directory("static", "index.html")
+    return send_from_directory(STATIC, "index.html")
+
+
+@app.get("/<page>")
+def page(page):
+    if page in PAGES:
+        return send_from_directory(STATIC, page + ".html")
+    if page == "index":
+        return redirect("/")
+    if os.path.isfile(os.path.join(STATIC, page)):
+        return send_from_directory(STATIC, page)  # icon.svg, manifest.json, dll
+    abort(404)
 
 
 init()

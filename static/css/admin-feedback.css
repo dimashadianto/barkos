@@ -1,0 +1,93 @@
+.sum {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap
+}
+
+.avg {
+    font: 800 44px 'Bricolage Grotesque', sans-serif;
+    line-height: 1
+}
+
+.avg small {
+    font-size: 16px;
+    color: var(--mut);
+    font-weight: 400
+}
+
+.stars {
+    color: var(--tag);
+    letter-spacing: 2px;
+    font-size: 18px
+}
+
+.stars .off {
+    color: var(--line)
+}
+
+.dist {
+    flex: 1;
+    min-width: 180px;
+    display: grid;
+    gap: 4px
+}
+
+.dr {
+    display: grid;
+    grid-template-columns: 18px 1fr 28px;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--mut)
+}
+
+.bar {
+    height: 8px;
+    border-radius: 8px;
+    background: var(--line);
+    overflow: hidden
+}
+
+.bar i {
+    display: block;
+    height: 100%;
+    background: var(--tag)
+}
+
+.chips {
+    display: flex;
+    gap: 8px;
+    overflow: auto;
+    margin: 14px 0;
+    padding-bottom: 2px
+}
+
+.chip {
+    border: 1.5px solid var(--line);
+    border-radius: 99px;
+    padding: 6px 14px;
+    background: var(--card);
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 14px
+}
+
+.chip.on {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue)
+}
+
+.fh {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center
+}
+
+.fm {
+    margin: 6px 0 0;
+    white-space: pre-wrap;
+    word-break: break-word
+}

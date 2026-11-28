@@ -1,0 +1,52 @@
+.chips {
+    display: flex;
+    gap: 8px;
+    overflow: auto;
+    margin: 4px 0 14px;
+    padding-bottom: 2px
+}
+
+.chip {
+    border: 1.5px solid var(--line);
+    border-radius: 99px;
+    padding: 6px 14px;
+    background: var(--card);
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 14px
+}
+
+.chip.on {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue)
+}
+
+.oh {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: flex-start
+}
+
+.oh b {
+    font-size: 16px
+}
+
+.meta {
+    color: var(--mut);
+    font-size: 14px;
+    margin-top: 4px
+}
+
+.amt {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    align-items: center
+}
+
+.sec-t {
+    margin: 6px 0 10px
+}

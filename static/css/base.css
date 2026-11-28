@@ -134,10 +134,13 @@ textarea {
 
 .nav a {
     flex: 1;
-    text-align: center;
-    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 9px 0 10px;
     color: var(--mut);
-    font-size: 13px;
+    font-size: 12px;
     text-decoration: none
 }
 
@@ -243,7 +246,7 @@ label {
     display: inline-block;
     background: var(--tag);
     color: #18213A;
-    font-family: 'Bricolage Grotesque';
+    font-family: 'Bricolage Grotesque', system-ui, sans-serif;
     font-weight: 800;
     padding: 4px 12px 4px 20px;
     clip-path: polygon(10px 0, 100% 0, 100% 100%, 10px 100%, 0 50%)
@@ -284,4 +287,139 @@ label {
     padding: 12px 16px;
     border-radius: 12px;
     z-index: 9
+}
+
+.ic {
+    display: block;
+    flex: none
+}
+
+.back {
+    display: grid;
+    place-items: center
+}
+
+.bell {
+    display: grid;
+    place-items: center;
+    color: var(--ink)
+}
+
+.nav a.on .ic {
+    stroke-width: 2.2
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px
+}
+
+@media(min-width:640px) {
+    .stats {
+        grid-template-columns: repeat(4, 1fr)
+    }
+}
+
+.stat {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px
+}
+
+.stat b {
+    display: block;
+    font: 800 26px 'Bricolage Grotesque', sans-serif;
+    line-height: 1.1
+}
+
+.stat span {
+    display: block;
+    font-size: 14px;
+    color: var(--mut)
+}
+
+.stat small {
+    display: block;
+    font-size: 12px;
+    color: var(--mut);
+    margin-top: 2px
+}
+
+/* Modal */
+.modal {
+    border: 0;
+    border-radius: 22px;
+    padding: 28px 24px 22px;
+    width: min(380px, calc(100% - 32px));
+    background: var(--card);
+    color: var(--ink);
+    text-align: center;
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .5)
+}
+
+.modal::backdrop {
+    background: rgba(16, 22, 43, .6);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px)
+}
+
+.modal h2 {
+    font-size: 24px;
+    margin: 14px 0 8px
+}
+
+.modal p {
+    margin: 0 0 20px;
+    font-size: 15px
+}
+
+.m-ic {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    margin: 0 auto;
+    background: color-mix(in srgb, var(--ok) 16%, var(--card));
+    color: var(--ok)
+}
+
+.m-ic.bad {
+    background: color-mix(in srgb, var(--bad) 16%, var(--card));
+    color: var(--bad)
+}
+
+.m-ic .ic {
+    stroke-width: 2
+}
+
+.m-act {
+    display: grid;
+    gap: 8px
+}
+
+@media(prefers-reduced-motion:no-preference) {
+    .modal[open] {
+        animation: pop .22s ease-out
+    }
+
+    .modal[open]::backdrop {
+        animation: fade .22s
+    }
+
+    @keyframes pop {
+        from {
+            opacity: 0;
+            transform: scale(.92) translateY(8px)
+        }
+    }
+
+    @keyframes fade {
+        from {
+            opacity: 0
+        }
+    }
 }

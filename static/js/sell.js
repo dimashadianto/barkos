@@ -12,7 +12,7 @@
     $("#pf").onchange = async e => { const d = await shrink(e.target.files[0]); $("#pv").hidden = !d; if (d) $("#pv").src = d };
     const lab = { pending: ["Menunggu verifikasi", "warn"], active: ["Tayang", "ok"], rejected: ["Ditolak", "bad"], sold: ["Terjual", ""] };
     async function mine() {
-        const L = await api("GET", "/my/listings"); $("#mine").innerHTML = L.length ? L.map(l => `<div class="card mine"><a href="product.html?id=${l.id}"><b>${esc(l.title)}</b> <span class="st ${lab[l.status][1]}">${lab[l.status][0]}</span>
+        const L = await api("GET", "/my/listings"); $("#mine").innerHTML = L.length ? L.map(l => `<div class="card mine"><a href="product?id=${l.id}"><b>${esc(l.title)}</b> <span class="st ${lab[l.status][1]}">${lab[l.status][0]}</span>
 <div class="mut">${rp(l.price)}${l.reject_reason ? ` · Ditolak: ${esc(l.reject_reason)}` : ""}</div></a></div>`).join("") : '<p class="mut">Belum ada barang yang kamu pasang.</p>'
     }
     $("#f").onsubmit = async e => {

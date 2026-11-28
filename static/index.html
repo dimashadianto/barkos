@@ -2,10 +2,259 @@
 <html lang="id">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>BarKos</title>
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#2A4BD7" />
+    <title>BarKos · Jual-beli barang kos di sekitarmu</title>
+    <meta
+      name="description"
+      content="BarKos: marketplace barang kos untuk mahasiswa dan pekerja perantau. Cari yang dekat, setiap barang diverifikasi admin, bayar COD atau online."
+    />
+    <meta
+      property="og:title"
+      content="BarKos · Jual-beli barang kos di sekitarmu"
+    />
+    <meta
+      property="og:description"
+      content="Setiap barang diverifikasi admin. Cari yang dekat, bayar COD atau online."
+    />
+    <meta property="og:type" content="website" />
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.json" />
   </head>
   <body>
+    <a class="skip" href="#main">Lewati ke konten</a>
+
+    <header class="sbar" id="top">
+      <div class="wrap bar">
+        <a class="brand" href="#top" aria-label="BarKos, ke atas"
+          ><img src="icon.svg" alt="" width="36" height="36" /><span
+            >Bar<span class="tag">Kos</span></span
+          ></a
+        >
+        <nav class="links" aria-label="Bagian halaman">
+          <a href="#cara">Cara kerja</a><a href="#fitur">Fitur</a
+          ><a href="#aman">Keamanan</a>
+        </nav>
+        <div class="cta">
+          <a class="lbtn ghost" href="login">Masuk</a
+          ><a class="lbtn" href="register">Daftar gratis</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero wrap">
+        <div class="copy">
+          <p class="eyebrow">Untuk mahasiswa dan pekerja perantau</p>
+          <h1>Barang kos bekas pindah tangan, <em>tanpa ribet.</em></h1>
+          <p class="lead">
+            Jual barang yang sudah tidak terpakai, atau temukan kipas, rak, dan
+            peralatan dapur murah dari penghuni kos terdekat. Setiap barang
+            diperiksa admin sebelum tayang.
+          </p>
+          <div class="hero-cta">
+            <a class="lbtn big" href="register"
+              >Mulai gratis <i data-ic="arrow" data-s="20"></i></a
+            ><a class="lbtn ghost big" href="#cara">Lihat cara kerja</a>
+          </div>
+          <ul class="pills">
+            <li><i data-ic="shield" data-s="18"></i>Diverifikasi admin</li>
+            <li><i data-ic="pin" data-s="18"></i>Berbasis jarak</li>
+            <li><i data-ic="wallet" data-s="18"></i>COD atau bayar online</li>
+          </ul>
+        </div>
+        <div class="mock" aria-hidden="true">
+          <div class="phone">
+            <div class="ph-top">
+              <b>Barang di sekitar Slipi</b
+              ><span class="mut">Semua sudah diverifikasi</span>
+            </div>
+            <div class="mi">
+              <span class="mt t1"><i data-ic="sofa" data-s="26"></i></span>
+              <div><b>Kipas angin</b><small>Slipi · 0,8 km · COD</small></div>
+              <span class="tag">Rp45.000</span>
+            </div>
+            <div class="mi">
+              <span class="mt t2"><i data-ic="box" data-s="26"></i></span>
+              <div>
+                <b>Rak buku 4 susun</b><small>Grogol · 1,2 km · COD</small>
+              </div>
+              <span class="tag">Rp85.000</span>
+            </div>
+            <div class="mi">
+              <span class="mt t3"><i data-ic="wallet" data-s="26"></i></span>
+              <div>
+                <b>Rice cooker</b><small>Kebon Jeruk · 2,4 km · Online</small>
+              </div>
+              <span class="tag">Rp120.000</span>
+            </div>
+          </div>
+          <div class="float f1">
+            <i data-ic="check" data-s="20"></i> Disetujui admin
+          </div>
+          <div class="float f2">
+            <i data-ic="bell" data-s="20"></i> Ada yang ingin membeli barangmu
+          </div>
+        </div>
+      </section>
+
+      <section id="cara" class="sec wrap">
+        <h2 class="rv">Empat langkah, dari daftar sampai barang di tangan</h2>
+        <ol class="steps">
+          <li class="rv">
+            <span class="n">1</span>
+            <h3>Daftar &amp; pilih area</h3>
+            <p>
+              Isi tipe (mahasiswa atau pekerja) dan area tinggalmu. Jarak barang
+              dihitung dari sana.
+            </p>
+          </li>
+          <li class="rv">
+            <span class="n">2</span>
+            <h3>Cari atau pasang barang</h3>
+            <p>
+              Cari dengan radius, atau foto dan pasang barangmu. Barang baru
+              menunggu verifikasi admin.
+            </p>
+          </li>
+          <li class="rv">
+            <span class="n">3</span>
+            <h3>Chat &amp; sepakat</h3>
+            <p>
+              Tanyakan kondisi barang dan atur titik temu lewat chat di dalam
+              aplikasi.
+            </p>
+          </li>
+          <li class="rv">
+            <span class="n">4</span>
+            <h3>Bayar &amp; selesai</h3>
+            <p>
+              Pilih COD atau bayar online. Setelah barang diterima, transaksi
+              ditandai selesai.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="fitur" class="sec wrap">
+        <h2 class="rv">Dibuat untuk jual-beli antar-penghuni kos</h2>
+        <div class="feat">
+          <article class="rv">
+            <span class="fi"><i data-ic="pin"></i></span>
+            <h3>Cari yang dekat</h3>
+            <p>
+              Filter radius 3, 8, atau 15 km. Yang terlihat hanya area dan
+              jarak, bukan alamat lengkap penjual.
+            </p>
+          </article>
+          <article class="rv">
+            <span class="fi"><i data-ic="shield"></i></span>
+            <h3>Diverifikasi admin</h3>
+            <p>
+              AI menandai yang mencurigakan, lalu tim verifikasi memutuskan.
+              Pembeli bisa melaporkan barang yang janggal.
+            </p>
+          </article>
+          <article class="rv">
+            <span class="fi"><i data-ic="wallet"></i></span>
+            <h3>COD atau online</h3>
+            <p>
+              Bayar di tempat, atau lewat bank dan e-wallet. Dana online baru
+              cair setelah barang diterima.
+            </p>
+          </article>
+          <article class="rv">
+            <span class="fi"><i data-ic="chat"></i></span>
+            <h3>Chat langsung</h3>
+            <p>
+              Ngobrol dengan penjual atau pembeli tanpa perlu membagikan nomor
+              HP.
+            </p>
+          </article>
+          <article class="rv">
+            <span class="fi"><i data-ic="bell"></i></span>
+            <h3>Notifikasi</h3>
+            <p>
+              Tahu saat ada pesan, pengajuan beli, atau barangmu disetujui,
+              lewat lonceng dan notifikasi browser.
+            </p>
+          </article>
+          <article class="rv">
+            <span class="fi"><i data-ic="lock"></i></span>
+            <h3>Aturan yang adil</h3>
+            <p>
+              Penjual tidak bisa membeli, memulai chat, atau melaporkan
+              barangnya sendiri.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="aman" class="trust">
+        <div class="wrap">
+          <h2 class="rv">Setiap barang diperiksa dua lapis sebelum tayang</h2>
+          <ol class="flow">
+            <li class="rv">
+              <i data-ic="tag"></i><b>Penjual memasang</b
+              ><span>Foto, harga, dan kondisi barang</span>
+            </li>
+            <li class="rv">
+              <i data-ic="search"></i><b>AI menandai</b
+              ><span>Kata atau foto yang mencurigakan</span>
+            </li>
+            <li class="rv">
+              <i data-ic="shield"></i><b>Admin memutuskan</b
+              ><span>Setujui, atau tolak dengan alasan</span>
+            </li>
+            <li class="rv">
+              <i data-ic="check"></i><b>Barang tayang</b
+              ><span>Baru bisa dicari dan dibeli</span>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="final wrap">
+        <div class="fbox rv">
+          <h2>Ada barang kos yang menganggur?</h2>
+          <p>
+            Daftar gratis, pasang barangmu, dan biarkan penghuni kos terdekat
+            yang membutuhkannya.
+          </p>
+          <div class="hero-cta">
+            <a class="lbtn big" href="register">Daftar gratis</a
+            ><a class="lbtn ghost big" href="login">Sudah punya akun? Masuk</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <a class="brand" href="#top"
+          ><img src="icon.svg" alt="" width="28" height="28" /><span
+            >Bar<span class="tag">Kos</span></span
+          ></a
+        >
+        <p>
+          Versi demo: pembayaran online dan notifikasi masih berupa simulasi.
+          Tidak ada uang sungguhan yang diproses.
+        </p>
+        <small>© 2026 BarKos</small>
+      </div>
+    </footer>
+
+    <script src="js/common.js"></script>
     <script src="js/index.js"></script>
   </body>
 </html>

@@ -1,5 +1,5 @@
 (async () => {
-    const u = await guard({ user: true }); layout("Pembayaran", null, u, "orders.html"); const id = qs.get("order"); let ch, o, pick = null;
+    const u = await guard({ user: true }); layout("Pembayaran", null, u, "orders"); const id = qs.get("order"); let ch, o, pick = null;
     const demo = '<div class="demo">MODE DEMO: ini simulasi payment gateway. Tidak ada uang, bank, atau e-wallet sungguhan yang dipakai.</div>';
     function qr(seed) {
         let h = 0; for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0; const r = () => (h = (h * 1664525 + 1013904223) >>> 0) / 2 ** 32, F = [[0, 0], [14, 0], [0, 14]]; let s = "";
@@ -12,7 +12,7 @@
     function draw() {
         const B = $("#body");
         if (o.pay_method !== "online" || o.role !== "pembeli") { B.innerHTML = demo + '<p class="err">Halaman ini hanya untuk pembeli pesanan online.</p>'; return }
-        if (o.pay_status === "paid" || o.pay_status === "released") { B.innerHTML = demo + `<div class="ok"><div class="big">✅</div><h2>Pembayaran diterima</h2><p class="mut">Penjual sudah diberi tahu. Setelah barang kamu terima, tekan <b>Barang diterima</b> di halaman Transaksi agar dana diteruskan ke penjual.</p><a class="btn" href="orders.html">Ke Transaksi</a></div>`; return }
+        if (o.pay_status === "paid" || o.pay_status === "released") { B.innerHTML = demo + `<div class="ok"><div class="big" style="color:var(--ok)">${ic("check", 72)}</div><h2>Pembayaran diterima</h2><p class="mut">Penjual sudah diberi tahu. Setelah barang kamu terima, tekan <b>Barang diterima</b> di halaman Transaksi agar dana diteruskan ke penjual.</p><a class="btn" href="orders">Ke Transaksi</a></div>`; return }
         if (o.status !== "accepted") { B.innerHTML = demo + sum() + '<p class="mut">Pembayaran dibuka setelah penjual menyetujui pesananmu.</p>'; return }
         if (o.pay_status === "pending" && o.pay_info) {
             const i = o.pay_info, bank = i.kind === "bank";

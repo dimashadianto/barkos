@@ -1,36 +1,86 @@
-.ob {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 16px;
-    padding: 24px
+/* Onboarding: dipusatkan secara vertikal & horizontal di layar apa pun */
+html,
+body {
+    height: 100%
 }
 
-.big {
-    font-size: 88px;
-    line-height: 1
+body {
+    background: radial-gradient(120% 80% at 50% 0, color-mix(in srgb, var(--blue) 14%, var(--bg)), var(--bg) 70%)
+}
+
+#app {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom))
+}
+
+.ob {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 18px
+}
+
+.tile {
+    width: 128px;
+    height: 128px;
+    border-radius: 36px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    margin-bottom: 8px;
+    position: relative;
+    background: linear-gradient(145deg, #4466F2, #2238B5);
+    box-shadow: 0 18px 40px -14px rgba(42, 75, 215, .55)
+}
+
+.tile::after {
+    content: "";
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--tag);
+    border: 5px solid var(--bg)
+}
+
+.tile .ic {
+    width: 60px;
+    height: 60px;
+    stroke-width: 1.6
 }
 
 .ob h1 {
-    font-size: 34px
+    font-size: 30px;
+    line-height: 1.12
 }
 
 .ob p {
     font-size: 17px;
-    margin: 0
+    margin: 0;
+    max-width: 34ch
 }
 
 .dots {
     display: flex;
-    gap: 6px
+    gap: 6px;
+    justify-content: center;
+    margin: 6px 0
 }
 
 .dots i {
     width: 8px;
     height: 8px;
     border-radius: 9px;
-    background: var(--line)
+    background: var(--line);
+    transition: width .2s, background .2s
 }
 
 .dots i.on {
@@ -38,15 +88,30 @@
     background: var(--blue)
 }
 
+.acts {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 10px;
+    width: 100%
+}
+
 @media(prefers-reduced-motion:no-preference) {
-    .ob {
-        animation: in .25s
+    .ob>* {
+        animation: in .3s both
+    }
+
+    .ob>*:nth-child(2) {
+        animation-delay: .04s
+    }
+
+    .ob>*:nth-child(3) {
+        animation-delay: .08s
     }
 
     @keyframes in {
         from {
             opacity: 0;
-            transform: translateX(12px)
+            transform: translateY(10px)
         }
     }
 }
