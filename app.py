@@ -750,7 +750,9 @@ def messages(lid):
         "SELECT * FROM messages WHERE listing_id=? AND ((from_id=? AND to_id=?) OR (from_id=? AND to_id=?)) ORDER BY ts",
         (lid, i, other, other, i),
     )
-    return jsonify([{"mine": m["from_id"] == i, "body": m["body"]} for m in rows])
+    return jsonify(
+        [{"mine": m["from_id"] == i, "body": m["body"], "ts": m["ts"]} for m in rows]
+    )
 
 
 # ---------- Transaksi: COD atau bayar online (bank / e-wallet, mock) ----------

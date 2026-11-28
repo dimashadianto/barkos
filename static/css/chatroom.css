@@ -9,21 +9,91 @@
     padding-bottom: 12px
 }
 
+/* Bubble ala WhatsApp: lebar mengikuti isi pesan, pesan sendiri rata kanan */
+#msgs {
+    display: flex;
+    flex-direction: column;
+    gap: 2px
+}
+
 .bub {
-    max-width: 80%;
-    padding: 8px 12px;
-    border-radius: 14px;
-    margin: 4px 0;
+    position: relative;
+    align-self: flex-start;
+    width: fit-content;
+    max-width: min(80%, 520px);
+    padding: 6px 10px 7px;
+    border-radius: 10px;
     background: var(--card);
     border: 1px solid var(--line);
-    overflow-wrap: anywhere
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    line-height: 1.35
+}
+
+.bub.first {
+    margin-top: 8px;
+    border-top-left-radius: 2px
 }
 
 .bub.me {
-    margin-left: auto;
+    align-self: flex-end;
     background: var(--blue);
     color: #fff;
-    border: 0
+    border-color: var(--blue)
+}
+
+.bub.me.first {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 2px
+}
+
+/* "ekor" kecil di pesan pertama tiap kelompok */
+.bub.first::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: -8px;
+    width: 8px;
+    height: 10px;
+    background: inherit;
+    border-top: inherit;
+    clip-path: polygon(0 0, 100% 0, 100% 100%)
+}
+
+.bub.me.first::before {
+    left: auto;
+    right: -8px;
+    clip-path: polygon(0 0, 100% 0, 0 100%)
+}
+
+/* jam kirim di pojok kanan bawah, teks mengalir di sebelahnya */
+.tm {
+    float: right;
+    margin: 6px 0 -3px 10px;
+    font-size: 11px;
+    line-height: 1;
+    color: var(--mut);
+    white-space: nowrap
+}
+
+.bub.me .tm {
+    color: rgba(255, 255, 255, .75)
+}
+
+/* pemisah tanggal: "Hari ini", "Kemarin", dst */
+.day {
+    align-self: center;
+    margin: 12px 0 4px
+}
+
+.day span {
+    display: inline-block;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    color: var(--mut)
 }
 
 .composer {
