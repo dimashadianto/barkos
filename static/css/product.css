@@ -55,3 +55,110 @@ fieldset.pm input {
     width: auto;
     margin: 0
 }
+/* ---- Galeri foto (geser) ---- */
+.gal {
+    margin-bottom: 12px
+}
+
+.gtrack {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    border-radius: 14px;
+    scrollbar-width: none
+}
+
+.gtrack::-webkit-scrollbar {
+    display: none
+}
+
+.gtrack .pic {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    margin: 0;
+    border-radius: 0;
+    height: 300px;
+    max-height: none
+}
+
+.dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px
+}
+
+.dots button {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--line);
+    cursor: pointer
+}
+
+.dots button.on {
+    background: var(--blue);
+    width: 20px;
+    border-radius: 4px
+}
+
+/* ---- Judul + tombol simpan ---- */
+.ttl {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px
+}
+
+.ttl h2 {
+    flex: 1;
+    margin: 0
+}
+
+.save {
+    border: 1.5px solid var(--line);
+    background: var(--card);
+    color: var(--mut);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex: none
+}
+
+.save.on {
+    color: var(--bad);
+    border-color: var(--bad)
+}
+
+.save.on .ic path {
+    fill: currentColor
+}
+
+/* ---- Kartu penjual ---- */
+.seller {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    margin: 8px 0 12px
+}
+
+.seller>div:nth-child(2) {
+    flex: 1
+}
+
+.seller .av {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--tag);
+    color: #18213A;
+    display: grid;
+    place-items: center;
+    font: 800 18px 'Bricolage Grotesque'
+}

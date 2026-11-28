@@ -73,5 +73,6 @@
 
 .ok .big {
     display: grid;
-    place-items: center
+    place-items: center;
+    margin-bottom: 25px
 }

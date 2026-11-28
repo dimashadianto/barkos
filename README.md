@@ -25,3 +25,16 @@ Pembayaran online hanya simulasi: tidak ada uang/bank sungguhan.
 
 ## Modal
 `modal({title, text, icon, tone, actions})` di `static/js/common.js` (pengganti `alert`/`confirm`), mengembalikan Promise. Dipakai di konfirmasi akun berhasil dihapus.
+
+## Update dari Samuel (branch `samuel`)
+- **Kelola barang sendiri** (`/sell`): Edit, Tandai terjual, dan Hapus (pakai modal konfirmasi). Barang yang diedit otomatis **diverifikasi ulang** admin, dan pengajuan beli yang belum disetujui dibatalkan + pembeli dapat notifikasi. Edit/hapus ditolak kalau ada transaksi yang sudah disetujui.
+- **Multi-foto**: maks 5 foto per barang (foto pertama = sampul), diperkecil otomatis di HP ke 1080px. Halaman barang punya galeri geser. Kolom baru `listings.photos` (JSON); kolom `photo` tetap diisi foto sampul supaya halaman lama tetap jalan.
+- **Rating & ulasan penjual**: pembeli bisa kasih bintang 1–5 + komentar setelah transaksi **selesai** (1x per transaksi). Rating tampil di halaman barang; halaman baru `/seller?id=` berisi semua ulasan.
+- **Barang disimpan (wishlist)**: tombol hati di halaman barang, daftar di `/wishlist` (link di Jelajah & Profil).
+- **Ganti password** di halaman Profil.
+- **Keamanan**:
+  - Secret key tidak lagi default: pakai env `BARKOS_SECRET`, atau otomatis dibuat acak di file `.barkos_secret` (sudah di-.gitignore, jangan di-commit).
+  - Mode debug mati secara default. Nyalakan hanya saat develop: `set BARKOS_DEBUG=1` (CMD) / `$env:BARKOS_DEBUG="1"` (PowerShell).
+  - Login dikunci 5 menit setelah 5x salah password.
+  - Batas ukuran request 8 MB.
+- Database lama otomatis dimigrasi (tabel `reviews`, `wishlist`, kolom `listings.photos`).

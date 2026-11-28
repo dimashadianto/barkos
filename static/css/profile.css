@@ -21,3 +21,44 @@
     gap: 8px;
     margin-top: 20px
 }
+.pwbox {
+    margin-top: 16px
+}
+
+.pwbox summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none
+}
+
+.pwbox form {
+    margin-top: 12px
+}
+
+.rvm .pick {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 8px 0 12px
+}
+
+.rvm .pick button {
+    border: 0;
+    background: none;
+    font-size: 34px;
+    line-height: 1;
+    color: var(--line);
+    cursor: pointer;
+    padding: 2px
+}
+
+.rvm .pick button.on {
+    color: var(--tag)
+}
+
+.rvm textarea {
+    width: 100%
+}

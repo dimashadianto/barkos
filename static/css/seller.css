@@ -1,0 +1,44 @@
+.who {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px
+}
+
+.who h2 {
+    margin: 0
+}
+
+.av {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--tag);
+    color: #18213A;
+    display: grid;
+    place-items: center;
+    font: 800 24px 'Bricolage Grotesque'
+}
+
+.score {
+    display: flex;
+    align-items: center;
+    gap: 14px
+}
+
+.score>b {
+    font: 800 40px 'Bricolage Grotesque';
+    color: var(--blue)
+}
+
+.score .stars {
+    font-size: 20px
+}
+
+.rv p {
+    margin: 6px 0 0
+}
+
+.rv .row {
+    justify-content: space-between
+}

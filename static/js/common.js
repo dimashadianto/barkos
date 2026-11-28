@@ -20,7 +20,13 @@ const ICONS = {
     back: '<path d="M19 12H5m6-6-6 6 6 6"/>',
     arrow: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
     search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
-    sofa: '<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 12.5a2 2 0 0 1 4 0V15h10v-2.5a2 2 0 0 1 4 0V18H3z"/><path d="M6 18v2M18 18v2"/>'
+    sofa: '<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 12.5a2 2 0 0 1 4 0V15h10v-2.5a2 2 0 0 1 4 0V18H3z"/><path d="M6 18v2M18 18v2"/>',
+    heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>',
+    edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+    trash: '<path d="M4 7h16M9.5 7V4.5h5V7M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    x: '<path d="M6 6l12 12M18 6 6 18"/>',
+    key: '<circle cx="8" cy="14" r="4"/><path d="m11 11 8.5-8.5M16 6l2.5 2.5M14 8l2 2"/>'
 };
 const ic = (n, s = 22) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ""}</svg>`;
 function hydrateIcons(r = document) { r.querySelectorAll("[data-ic]").forEach(e => { e.innerHTML = ic(e.dataset.ic, +e.dataset.s || 22); e.removeAttribute("data-ic") }) }
@@ -63,4 +69,32 @@ function modal({ icon = "check", tone = "ok", title, text = "", actions = [{ lab
         d.addEventListener("close", () => { d.remove(); res(val) });
         d.showModal();
     });
+}
+
+/* Bintang rating: stars(4.5) -> ★★★★☆ (dibulatkan), dipakai di produk, profil penjual, ulasan */
+const stars = n => { const r = Math.round(n); return `<span class="stars" aria-label="${n} dari 5 bintang">${"★".repeat(r)}<span class="off">${"★".repeat(5 - r)}</span></span>` };
+/* Perkecil foto di HP sebelum diupload (sisi terpanjang maks `max` px, JPEG) */
+const shrinkImg = (f, max = 1080) => new Promise(res => {
+    if (!f || !f.size) return res(null); const i = new Image;
+    i.onload = () => { const k = Math.min(1, max / Math.max(i.width, i.height)), c = document.createElement("canvas"); c.width = Math.round(i.width * k); c.height = Math.round(i.height * k); c.getContext("2d").drawImage(i, 0, 0, c.width, c.height); URL.revokeObjectURL(i.src); res(c.toDataURL("image/jpeg", .78)) };
+    i.onerror = () => res(null); i.src = URL.createObjectURL(f)
+});
+
+function openFeedback() {
+    const d = document.createElement("dialog"); d.className = "modal rvm"; d.setAttribute("aria-labelledby", "fb-t"); let r = 0;
+    d.innerHTML = `<h2 id="fb-t">Kirim feedback</h2><p class="mut">Ceritakan pengalamanmu supaya BarKos bisa lebih baik.</p>
+<div class="pick" role="radiogroup" aria-label="Penilaian">${[1, 2, 3, 4, 5].map(n => `<button type="button" role="radio" aria-checked="false" aria-label="${n} bintang" data-n="${n}">★</button>`).join("")}</div>
+<select id="fbc" aria-label="Topik"><option>umum</option><option>pencarian</option><option>transaksi</option><option>verifikasi</option><option>keamanan</option></select>
+<textarea id="fbm" rows="4" maxlength="500" placeholder="Tulis pesanmu"></textarea><div class="err" id="fbe" role="alert"></div>
+<div class="m-act"><button class="btn alt" data-x>Batal</button><button class="btn" data-ok>Kirim feedback</button></div>`;
+    document.body.append(d); const B = [...d.querySelectorAll(".pick button")], err = d.querySelector("#fbe");
+    B.forEach(b => b.onclick = () => { r = +b.dataset.n; B.forEach(x => { x.classList.toggle("on", +x.dataset.n <= r); x.setAttribute("aria-checked", +x.dataset.n === r) }) });
+    d.querySelector("[data-x]").onclick = () => d.close();
+    d.querySelector("[data-ok]").onclick = async () => {
+        const m = d.querySelector("#fbm").value.trim();
+        if (!r) { err.textContent = "Pilih jumlah bintang dulu"; return }
+        if (!m) { err.textContent = "Tulis pesan dulu"; return }
+        try { await api("POST", "/feedback", { rating: r, category: d.querySelector("#fbc").value, message: m }); d.close(); toast("Terima kasih, feedback terkirim") } catch (x) { err.textContent = x.message }
+    };
+    d.addEventListener("close", () => d.remove()); d.showModal();
 }

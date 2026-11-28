@@ -44,3 +44,12 @@
 .item .tag {
     margin-top: 6px
 }
+
+.saved-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 10px
+}
