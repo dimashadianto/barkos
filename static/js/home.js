@@ -1,6 +1,7 @@
 (async () => {
     const u = await guard({ user: true }); layout("Jelajah", "home", u); const f = { q: "", category: "", radius: "", sort: "near" };
     $("#body").innerHTML = `<p class="mut">Jarak dihitung dari ${esc(u.area)}. Hanya barang yang sudah diverifikasi admin yang tampil.</p>
+<a class="saved-link" href="wishlist">${ic("heart", 18)} Barang disimpan</a>
 <input id="q" type="search" placeholder="Cari kipas, meja, rak…" aria-label="Cari barang"><div class="chips" id="chips"></div>
 <div class="row"><select id="rad" aria-label="Radius">${[["", "Semua jarak"], [3, "≤ 3 km"], [8, "≤ 8 km"], [15, "≤ 15 km"]].map(r => `<option value="${r[0]}">${r[1]}</option>`).join("")}</select>
 <select id="sort" aria-label="Urutan"><option value="near">Terdekat</option><option value="">Terbaru</option></select></div><div id="list" class="grid" style="margin-top:12px"></div>`;

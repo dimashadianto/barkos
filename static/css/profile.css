@@ -21,3 +21,19 @@
     gap: 8px;
     margin-top: 20px
 }
+.pwbox {
+    margin-top: 16px
+}
+
+.pwbox summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none
+}
+
+.pwbox form {
+    margin-top: 12px
+}

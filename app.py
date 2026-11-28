@@ -1,6 +1,6 @@
 """BarKos backend (Flask + SQLite). Jalankan: python app.py  -> http://localhost:5000"""
 
-import sqlite3, math, time, os, json
+import sqlite3, math, time, os, json, secrets
 from flask import Flask, request, jsonify, g, send_from_directory, redirect, abort
 from urllib.parse import quote
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,8 +8,26 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from services import ai_moderation, notifier, payment  # 3 layanan pihak ketiga (mock)
 
 app = Flask(__name__, static_folder="static", static_url_path="")
-tok = URLSafeTimedSerializer(os.environ.get("BARKOS_SECRET", "ganti-di-produksi"))
-DB = "barkos.db"
+app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # batas ukuran request (foto base64)
+BASE = os.path.dirname(os.path.abspath(__file__))
+
+
+def load_secret():
+    """Secret key dari env BARKOS_SECRET; kalau tidak ada, dibuat acak sekali & disimpan di .barkos_secret (tidak di-commit)."""
+    if os.environ.get("BARKOS_SECRET"):
+        return os.environ["BARKOS_SECRET"]
+    f = os.path.join(BASE, ".barkos_secret")
+    if not os.path.exists(f):
+        with open(f, "w") as h:
+            h.write(secrets.token_hex(32))
+    return open(f).read().strip()
+
+
+tok = URLSafeTimedSerializer(load_secret())
+DB = os.path.join(BASE, "barkos.db")
+MAX_PHOTOS = 5
+LOGIN_MAX_FAIL, LOGIN_LOCK_SEC = 5, 5 * 60  # 5x salah -> dikunci 5 menit
+login_fail = {}  # key: email|ip -> [jumlah gagal, waktu terkunci sampai]
 FEE_RATE = 0.05
 AREAS = {
     "Tanjung Duren": (-6.17, 106.78),
@@ -57,6 +75,8 @@ def init():
     CREATE TABLE IF NOT EXISTS reports(id INTEGER PRIMARY KEY, listing_id, reporter_id, reason, ts INT);
     CREATE TABLE IF NOT EXISTS feedback(id INTEGER PRIMARY KEY, user_id, rating INT, category, message, ts INT);
     CREATE TABLE IF NOT EXISTS notifications(id INTEGER PRIMARY KEY, user_id, text, link, read INT DEFAULT 0, ts INT);
+    CREATE TABLE IF NOT EXISTS reviews(id INTEGER PRIMARY KEY, order_id UNIQUE, reviewer_id, seller_id, rating INT, comment, ts INT);
+    CREATE TABLE IF NOT EXISTS wishlist(user_id, listing_id, ts INT, PRIMARY KEY(user_id, listing_id));
     """)
     for t, col in [
         ("listings", "reject_reason"),
@@ -66,6 +86,7 @@ def init():
         ("orders", "pay_ref"),
         ("orders", "pay_info"),
         ("orders", "done_ts"),
+        ("listings", "photos"),  # JSON list foto (maks 5); kolom photo = foto sampul
     ]:
         try:
             c.execute(
@@ -172,13 +193,23 @@ def register():
 @app.post("/api/login")
 def login():
     d = body()
-    u = q(
-        "SELECT * FROM users WHERE email=?",
-        (d.get("email", "").strip().lower(),),
-        one=True,
-    )
+    email = d.get("email", "").strip().lower()
+    key, now = f"{email}|{request.remote_addr}", time.time()
+    fail = login_fail.get(key, [0, 0])
+    if fail[1] > now:
+        menit = math.ceil((fail[1] - now) / 60)
+        return (
+            jsonify(error=f"Terlalu banyak percobaan. Coba lagi dalam {menit} menit."),
+            429,
+        )
+    u = q("SELECT * FROM users WHERE email=?", (email,), one=True)
     if not u or not check_password_hash(u["pw"], d.get("password", "")):
+        n = fail[0] + 1
+        login_fail[key] = (
+            [0, now + LOGIN_LOCK_SEC] if n >= LOGIN_MAX_FAIL else [n, 0]
+        )
         return jsonify(error="Email atau password salah"), 401
+    login_fail.pop(key, None)
     return jsonify(token=tok.dumps(u["id"]), user=user_json(u))
 
 
@@ -210,6 +241,25 @@ def me_update():
     )
 
 
+@app.put("/api/me/password")
+@auth()
+def me_password():
+    d = body()
+    if not check_password_hash(g.user["pw"], d.get("old", "")):
+        return jsonify(error="Password lama salah"), 403
+    new = d.get("new", "")
+    if len(new) < 6:
+        return jsonify(error="Password baru minimal 6 karakter"), 400
+    if new == d.get("old"):
+        return jsonify(error="Password baru harus beda dari yang lama"), 400
+    ex(
+        "UPDATE users SET pw=? WHERE id=?",
+        (generate_password_hash(new), g.user["id"]),
+    )
+    notify(g.user["id"], "Password akunmu baru saja diganti.", "profile")
+    return jsonify(ok=True)
+
+
 @app.delete("/api/me")
 @auth()
 def me_delete():
@@ -238,6 +288,9 @@ def me_delete():
         "DELETE FROM listings WHERE seller_id=?",
         "DELETE FROM feedback WHERE user_id=?",
         "DELETE FROM notifications WHERE user_id=?",
+        "DELETE FROM wishlist WHERE user_id=?",
+        "DELETE FROM reviews WHERE reviewer_id=?",
+        "DELETE FROM reviews WHERE seller_id=?",
         "DELETE FROM users WHERE id=?",
     ):
         ex(s, (i,))
@@ -338,14 +391,64 @@ def listing_json(r, area=None):  # koordinat TIDAK dikirim; hanya area & jarak
         )
     }
     d["cod"] = bool(r["cod"])
+    d["photos"] = json.loads(r["photos"]) if r["photos"] else ([r["photo"]] if r["photo"] else [])
     d["seller"] = (
         q("SELECT name FROM users WHERE id=?", (r["seller_id"],), one=True)
         or {"name": "Pengguna"}
     )["name"]
+    d["seller_rating"] = seller_rating(r["seller_id"])
     d["mine"] = r["seller_id"] == g.user["id"]
+    d["saved"] = bool(
+        q(
+            "SELECT 1 FROM wishlist WHERE user_id=? AND listing_id=?",
+            (g.user["id"], r["id"]),
+        )
+    )
     if area:
         d["km"] = round(dist(AREAS[area][0], AREAS[area][1], r["lat"], r["lng"]), 1)
     return d
+
+
+def seller_rating(uid):
+    r = q(
+        "SELECT COUNT(*) AS c, AVG(rating) AS a FROM reviews WHERE seller_id=?",
+        (uid,),
+        one=True,
+    )
+    return {"count": r["c"], "avg": round(r["a"], 1) if r["a"] else 0}
+
+
+def listing_form(d):
+    """Validasi isi form barang (dipakai saat pasang & edit). Mengembalikan (data, error)."""
+    t = (d.get("title") or "").strip()[:100]
+    try:
+        price = int(d.get("price", 0))
+    except (TypeError, ValueError):
+        price = 0
+    if not t or price <= 0:
+        return None, "Isi nama barang dan harga"
+    photos = d.get("photos")
+    if photos is None:  # klien lama yang masih kirim 1 foto
+        photos = [d["photo"]] if d.get("photo") else []
+    if not isinstance(photos, list) or len(photos) > MAX_PHOTOS:
+        return None, f"Maksimal {MAX_PHOTOS} foto"
+    for ph in photos:
+        if not (isinstance(ph, str) and ph.startswith("data:image/") and len(ph) < 1_500_000):
+            return None, "Format atau ukuran foto tidak valid"
+    area = d.get("area") if d.get("area") in AREAS else g.user["area"]
+    return {
+        "title": t,
+        "descr": (d.get("descr") or "")[:2000],
+        "category": d.get("category", "Lainnya"),
+        "price": price,
+        "cond": d.get("cond", "Baik"),
+        "cod": int(bool(d.get("cod", True))),
+        "area": area,
+        "lat": AREAS[area][0],
+        "lng": AREAS[area][1],
+        "photo": photos[0] if photos else None,
+        "photos": json.dumps(photos),
+    }, None
 
 
 @app.post("/api/listings")
@@ -353,37 +456,195 @@ def listing_json(r, area=None):  # koordinat TIDAK dikirim; hanya area & jarak
 def create_listing():
     if g.user["role"] == "admin":
         return jsonify(error="Admin tidak bisa menjual barang"), 403
-    d = body()
-    t = d.get("title", "").strip()
-    try:
-        price = int(d.get("price", 0))
-    except ValueError:
-        price = 0
-    if not t or price <= 0:
-        return jsonify(error="Isi nama barang dan harga"), 400
-    area = d.get("area") if d.get("area") in AREAS else g.user["area"]
-    lat, lng = AREAS[area]
-    ai = ai_moderation.check_listing(t, d.get("descr", ""), d.get("photo"))
+    f, err = listing_form(body())
+    if err:
+        return jsonify(error=err), 400
+    ai = ai_moderation.check_listing(f["title"], f["descr"], f["photo"])
+    cols = list(f) + ["seller_id", "status", "ai_note", "ts"]
     lid = ex(
-        "INSERT INTO listings(seller_id,title,descr,category,price,cond,cod,area,lat,lng,photo,status,ai_note,ts) VALUES(?,?,?,?,?,?,?,?,?,?,?,'pending',?,?)",
-        (
-            g.user["id"],
-            t,
-            d.get("descr", ""),
-            d.get("category", "Lainnya"),
-            price,
-            d.get("cond", "Baik"),
-            int(bool(d.get("cod", True))),
-            area,
-            lat,
-            lng,
-            d.get("photo"),
-            ai["note"],
-            int(time.time()),
-        ),
+        f"INSERT INTO listings({','.join(cols)}) VALUES({','.join('?' * len(cols))})",
+        list(f.values()) + [g.user["id"], "pending", ai["note"], int(time.time())],
     )
-    notify_admins(f"Barang baru menunggu verifikasi: {t}")
+    notify_admins(f"Barang baru menunggu verifikasi: {f['title']}")
     return jsonify(id=lid, status="pending")
+
+
+def own_listing(lid):
+    l = q(
+        "SELECT * FROM listings WHERE id=? AND seller_id=? AND status<>'deleted'",
+        (lid, g.user["id"]),
+        one=True,
+    )
+    busy = l and q(
+        "SELECT 1 FROM orders WHERE listing_id=? AND status='accepted'", (lid,)
+    )
+    return l, busy
+
+
+def cancel_requests(l, why):
+    """Batalkan pengajuan beli yang belum disetujui & kabari pembelinya."""
+    for o in q(
+        "SELECT id,buyer_id FROM orders WHERE listing_id=? AND status='requested'",
+        (l["id"],),
+    ):
+        ex("UPDATE orders SET status='cancelled' WHERE id=?", (o["id"],))
+        notify(o["buyer_id"], f"Pengajuan beli '{l['title']}' dibatalkan: {why}", "orders")
+
+
+@app.put("/api/listings/<int:lid>")
+@auth()
+def edit_listing(lid):
+    l, busy = own_listing(lid)
+    if not l:
+        return jsonify(error="Barang tidak ditemukan"), 404
+    if l["status"] == "sold":
+        return jsonify(error="Barang yang sudah terjual tidak bisa diedit"), 400
+    if busy:
+        return (
+            jsonify(error="Ada transaksi yang sedang berjalan. Selesaikan dulu sebelum mengedit."),
+            409,
+        )
+    f, err = listing_form(body())
+    if err:
+        return jsonify(error=err), 400
+    ai = ai_moderation.check_listing(f["title"], f["descr"], f["photo"])
+    # isi berubah -> wajib diverifikasi ulang oleh admin
+    ex(
+        f"UPDATE listings SET {', '.join(k + '=?' for k in f)}, status='pending', ai_note=?, reject_reason=NULL WHERE id=?",
+        list(f.values()) + [ai["note"], lid],
+    )
+    cancel_requests(l, "penjual mengubah detail barang")
+    notify_admins(f"Barang diedit, perlu verifikasi ulang: {f['title']}")
+    return jsonify(ok=True, status="pending")
+
+
+@app.delete("/api/listings/<int:lid>")
+@auth()
+def delete_listing(lid):
+    l, busy = own_listing(lid)
+    if not l:
+        return jsonify(error="Barang tidak ditemukan"), 404
+    if busy:
+        return (
+            jsonify(error="Ada transaksi yang sedang berjalan. Selesaikan atau batalkan dulu."),
+            409,
+        )
+    cancel_requests(l, "barang dihapus penjual")
+    # soft delete: riwayat transaksi lama tetap bisa menampilkan judul barang
+    ex("UPDATE listings SET status='deleted' WHERE id=?", (lid,))
+    ex("DELETE FROM wishlist WHERE listing_id=?", (lid,))
+    return jsonify(ok=True)
+
+
+@app.post("/api/listings/<int:lid>/sold")
+@auth()
+def mark_sold(lid):
+    l, busy = own_listing(lid)
+    if not l:
+        return jsonify(error="Barang tidak ditemukan"), 404
+    if l["status"] != "active":
+        return jsonify(error="Hanya barang yang sedang tayang yang bisa ditandai terjual"), 400
+    if busy:
+        return (
+            jsonify(error="Ada transaksi yang disetujui. Tandai selesai lewat menu Transaksi."),
+            409,
+        )
+    cancel_requests(l, "barang sudah terjual")
+    ex("UPDATE listings SET status='sold' WHERE id=?", (lid,))
+    return jsonify(ok=True)
+
+
+# ---------- Wishlist (barang disimpan) ----------
+@app.get("/api/wishlist")
+@auth()
+def wishlist():
+    rows = q(
+        "SELECT l.* FROM wishlist w JOIN listings l ON l.id=w.listing_id WHERE w.user_id=? AND l.status IN ('active','sold') ORDER BY w.ts DESC",
+        (g.user["id"],),
+    )
+    return jsonify([listing_json(r, g.user["area"]) for r in rows])
+
+
+@app.route("/api/wishlist/<int:lid>", methods=["POST", "DELETE"])
+@auth()
+def wishlist_toggle(lid):
+    if request.method == "DELETE":
+        ex("DELETE FROM wishlist WHERE user_id=? AND listing_id=?", (g.user["id"], lid))
+        return jsonify(saved=False)
+    l = q("SELECT seller_id FROM listings WHERE id=? AND status='active'", (lid,), one=True)
+    if not l:
+        return jsonify(error="Barang tidak tersedia"), 404
+    if l["seller_id"] == g.user["id"]:
+        return jsonify(error="Tidak bisa menyimpan barangmu sendiri"), 400
+    ex(
+        "INSERT OR IGNORE INTO wishlist(user_id,listing_id,ts) VALUES(?,?,?)",
+        (g.user["id"], lid, int(time.time())),
+    )
+    return jsonify(saved=True)
+
+
+# ---------- Rating & ulasan penjual ----------
+@app.get("/api/users/<int:uid>/reviews")
+@auth()
+def user_reviews(uid):
+    u = q("SELECT name FROM users WHERE id=?", (uid,), one=True)
+    if not u:
+        return jsonify(error="Pengguna tidak ditemukan"), 404
+    rows = q(
+        """SELECT r.rating, r.comment, r.ts, u.name AS reviewer, l.title FROM reviews r
+           LEFT JOIN users u ON u.id=r.reviewer_id LEFT JOIN orders o ON o.id=r.order_id
+           LEFT JOIN listings l ON l.id=o.listing_id WHERE r.seller_id=? ORDER BY r.id DESC LIMIT 50""",
+        (uid,),
+    )
+    return jsonify(
+        name=u["name"],
+        sold=q(
+            "SELECT COUNT(*) FROM orders WHERE seller_id=? AND status='completed'",
+            (uid,),
+            one=True,
+        )[0],
+        **seller_rating(uid),
+        items=[
+            dict(
+                rating=r["rating"],
+                comment=r["comment"],
+                ts=r["ts"],
+                reviewer=r["reviewer"] or "(akun dihapus)",
+                title=r["title"] or "(dihapus)",
+            )
+            for r in rows
+        ],
+    )
+
+
+@app.post("/api/orders/<int:oid>/review")
+@auth()
+def order_review(oid):
+    o = q(
+        "SELECT * FROM orders WHERE id=? AND buyer_id=?", (oid, g.user["id"]), one=True
+    )
+    if not o or o["status"] != "completed":
+        return jsonify(error="Ulasan hanya bisa untuk transaksi yang sudah selesai"), 400
+    if q("SELECT 1 FROM reviews WHERE order_id=?", (oid,)):
+        return jsonify(error="Kamu sudah memberi ulasan untuk transaksi ini"), 409
+    d = body()
+    try:
+        rating = int(d.get("rating", 0))
+    except (TypeError, ValueError):
+        rating = 0
+    if not 1 <= rating <= 5:
+        return jsonify(error="Pilih bintang 1-5"), 400
+    comment = (d.get("comment") or "").strip()[:500]
+    ex(
+        "INSERT INTO reviews(order_id,reviewer_id,seller_id,rating,comment,ts) VALUES(?,?,?,?,?,?)",
+        (oid, g.user["id"], o["seller_id"], rating, comment, int(time.time())),
+    )
+    notify(
+        o["seller_id"],
+        f"{g.user['name']} memberi ulasan {rating}/5 untuk transaksi #{oid}",
+        f"seller?id={o['seller_id']}",
+    )
+    return jsonify(ok=True)
 
 
 @app.get("/api/listings")
@@ -415,7 +676,7 @@ def listings():
 @auth()
 def listing_detail(lid):
     r = q("SELECT * FROM listings WHERE id=?", (lid,), one=True)
-    if not r or (
+    if not r or r["status"] == "deleted" or (
         r["status"] != "active"
         and r["seller_id"] != g.user["id"]
         and g.user["role"] != "admin"
@@ -431,7 +692,7 @@ def my_listings():
         [
             listing_json(r)
             for r in q(
-                "SELECT * FROM listings WHERE seller_id=? ORDER BY ts DESC",
+                "SELECT * FROM listings WHERE seller_id=? AND status<>'deleted' ORDER BY ts DESC",
                 (g.user["id"],),
             )
         ]
@@ -501,6 +762,7 @@ def order_json(r, i):
     d["pay_status"] = d.get("pay_status") or "none"
     d["pay_info"] = json.loads(d["pay_info"]) if d.get("pay_info") else None
     d["payout"] = d["price"] - d["fee"]
+    d["reviewed"] = bool(q("SELECT 1 FROM reviews WHERE order_id=?", (r["id"],)))
     return d
 
 
@@ -883,4 +1145,10 @@ def page(page):
 
 init()
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    # debug hanya kalau diminta: set BARKOS_DEBUG=1 (jangan dinyalakan di server online)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        debug=os.environ.get("BARKOS_DEBUG") == "1",
+        use_reloader=False,
+    )

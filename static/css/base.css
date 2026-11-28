@@ -423,3 +423,25 @@ label {
         }
     }
 }
+/* ---- Rating bintang (dipakai di produk, profil penjual, ulasan) ---- */
+.stars {
+    color: var(--tag);
+    letter-spacing: 1px
+}
+
+.stars .off {
+    color: var(--line)
+}
+
+/* tombol ikon kecil (simpan, edit, hapus) */
+.btn.icbtn,
+.btn.sm:has(.ic) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px
+}
+
+.btn.icbtn:not(.sm) {
+    display: flex
+}
